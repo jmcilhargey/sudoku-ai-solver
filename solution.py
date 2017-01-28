@@ -2,7 +2,6 @@ assignments = []
 
 def assign_value(values, box, value):
     """
-    Please use this function to update your values dictionary!
     Assigns a value to a given box. If it updates the board record it.
     """
     values[box] = value
@@ -24,7 +23,7 @@ def naked_twins(values):
 
 def cross(A, B):
     "Cross product of elements in A and elements in B."
-    pass
+    return [ i + j for i in A for j in B ]
 
 def grid_values(grid):
     """
@@ -36,7 +35,14 @@ def grid_values(grid):
             Keys: The boxes, e.g., 'A1'
             Values: The value in each box, e.g., '8'. If the box has no value, then the value will be '123456789'.
     """
-    pass
+    values = []
+    nums = '123456789'
+    for value in grid:
+        if value == '.':
+            values.append(nums)
+        elif char in nums:
+            values.append(value)
+    return dict(zip(boxes, values))
 
 def display(values):
     """
@@ -44,19 +50,75 @@ def display(values):
     Args:
         values(dict): The sudoku in dictionary form
     """
-    pass
+    cell_width = max(len(values[cell]) + 1 for cell in grid)
+    divider = '+'.join([(cell_width * 3) * '-'] * 3)
+    for i, row in enumerate(rows):
+        if i % 3 == 0:
+            print(divider)
+        for j, col in enumerate(cols):
+            print(values[row + col] + ('|' if j % 3 == 0 else ''))
+    print
 
 def eliminate(values):
-    pass
+    """
+    Go through all the boxes, and whenever there is a box with a value, eliminate this value from the values of all its peers.
+    Input: A sudoku in dictionary form.
+    Output: The resulting sudoku in dictionary form.
+    """
+    found_values = [ box for box in values.keys() if len(values[box]) == 1 ]
+    for box in found_values:
+        for peer in peers[box]:
+            if values[box] in values[peer]:
+                values[peer].replace(values[box], '')
+    return values
 
 def only_choice(values):
-    pass
+    """
+    Go through all the units, and whenever there is a unit with a value that only fits in one box, assign the value to this box.
+    Input: A sudoku in dictionary form.
+    Output: The resulting sudoku in dictionary form.
+    """
+    nums = '123456789'
+    for unit in units:
+        for num in nums:
+            num_cells = [ cell for cell in unit if num in values[cell] ]
+        if len(num_cells) == 1
+            values[num_cells[0]] = num
+    return values
 
 def reduce_puzzle(values):
-    pass
+    """
+    Iterate eliminate() and only_choice(). If at some point, there is a box with no available values, return False.
+    If the sudoku is solved, return the sudoku.
+    If after an iteration of both functions, the sudoku remains the same, return the sudoku.
+    Input: A sudoku in dictionary form.
+    Output: The resulting sudoku in dictionary form.
+    """
+    cont_reduce = True
+    while  cont_reduce
+        pre_solved_cells = [ box for box in values.keys() if len(values[box] == 1) ]
+        values = eliminate(values)
+        values = only_choice(values)
+        post_solved_cells = [ box for box in values.keys() if len(values[box] == 1) ]
+        cont_reduce = pre_solved_cells not post_solved_cells
+        if len([ box for box in values.keys() if len(values[box]) == 0 ]):
+            return False
+    return values
 
 def search(values):
-    pass
+    "Using depth-first search and propagation, try all possible values."
+    values = reduce_puzzle(values)
+    if values is False:
+        return False
+    if all(len(values[box]) == 1 for box in values):
+        return values
+    min_box = min(len(values[box]), box) for box in boxes if (len(values[box]) > 1)
+    for char in values[min_box]:
+        new_puzzle = values.copy()
+        new_puzzle[min_box] = char
+        result_puzzle = search(new_puzzle)
+        if result_puzzle:
+            return result_puzzle
 
 def solve(grid):
     """
@@ -67,6 +129,7 @@ def solve(grid):
     Returns:
         The dictionary representation of the final sudoku grid. False if no solution exists.
     """
+
 
 if __name__ == '__main__':
     diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
