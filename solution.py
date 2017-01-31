@@ -1,4 +1,19 @@
 assignments = []
+cols = '123456789'
+rows = 'ABCDEFGHI'
+reversed_rows = rows[::-1]
+def cross(A, B):
+    "Cross product of elements in A and elements in B."
+    return [ i + j for i in A for j in B ]
+
+boxes = cross(rows, cols)
+row_units = [ cross(r, cols) for r in rows ]
+column_units = [ cross(rows, c) for c in cols ]
+square_units = [ cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789') ]
+diagnonal_units = [[ rows[i] + cols[i] for i, col in enumerate(cols) ], [ reversed_rows[i] + cols[i] for i, col in enumerate(cols) ]]
+unitlist = row_units + column_units + square_units + diagnonal_units
+units = dict((s, [ u for u in unitlist if s in u ]) for s in boxes)
+peers = dict((s, set(sum(units[s],[])) - set([s])) for s in boxes)
 
 def assign_value(values, box, value):
     """
@@ -17,13 +32,19 @@ def naked_twins(values):
     Returns:
         the values dictionary with the naked twins eliminated from peers.
     """
-
-    # Find all instances of naked twins
-    # Eliminate the naked twins as possibilities for their peers
-
-def cross(A, B):
-    "Cross product of elements in A and elements in B."
-    return [ i + j for i in A for j in B ]
+    new_puzzle = values.copy()
+    twin_list = []
+    found_doubles = [ box for box in values.keys() if len(values[box]) == 2 ]
+    for double_box in found_doubles:
+        for unit in units[double_box]:
+            for unit_box in unit:
+                if unit_box != double_box and values[unit_box] == values[double_box]:
+                    twin_list.append((unit, values[unit_box]))
+    for twin in twin_list:
+        for box in twin[0]:
+            if new_puzzle[box] != twin[1] and len(new_puzzle[box]) > 1:
+                for c in twin[1]: new_puzzle[box] = new_puzzle[box].replace(c, '')
+    return new_puzzle
 
 def grid_values(grid):
     """
@@ -40,7 +61,7 @@ def grid_values(grid):
     for value in grid:
         if value == '.':
             values.append(nums)
-        elif char in nums:
+        elif value in nums:
             values.append(value)
     return dict(zip(boxes, values))
 
@@ -50,13 +71,12 @@ def display(values):
     Args:
         values(dict): The sudoku in dictionary form
     """
-    cell_width = max(len(values[cell]) + 1 for cell in grid)
+    cell_width = 1 + max(len(values[cell]) for cell in boxes)
     divider = '+'.join([(cell_width * 3) * '-'] * 3)
     for i, row in enumerate(rows):
-        if i % 3 == 0:
+        if i > 0 and i % 3 == 0:
             print(divider)
-        for j, col in enumerate(cols):
-            print(values[row + col] + ('|' if j % 3 == 0 else ''))
+        print(''.join(values[row + col].center(cell_width) + ('|' if (j + 1) % 3 == 0 and j < len(cols) - 1 else '') for j, col in enumerate(cols)))
     print
 
 def eliminate(values):
@@ -68,8 +88,7 @@ def eliminate(values):
     found_values = [ box for box in values.keys() if len(values[box]) == 1 ]
     for box in found_values:
         for peer in peers[box]:
-            if values[box] in values[peer]:
-                values[peer].replace(values[box], '')
+            values[peer] = values[peer].replace(values[box], '')
     return values
 
 def only_choice(values):
@@ -79,10 +98,10 @@ def only_choice(values):
     Output: The resulting sudoku in dictionary form.
     """
     nums = '123456789'
-    for unit in units:
+    for unit in unitlist:
         for num in nums:
             num_cells = [ cell for cell in unit if num in values[cell] ]
-        if len(num_cells) == 1
+        if len(num_cells) == 1:
             values[num_cells[0]] = num
     return values
 
@@ -95,12 +114,13 @@ def reduce_puzzle(values):
     Output: The resulting sudoku in dictionary form.
     """
     cont_reduce = True
-    while  cont_reduce
-        pre_solved_cells = [ box for box in values.keys() if len(values[box] == 1) ]
+    while cont_reduce:
+        pre_solved_cells = len([ box for box in values.keys() if len(values[box]) == 1 ])
         values = eliminate(values)
         values = only_choice(values)
-        post_solved_cells = [ box for box in values.keys() if len(values[box] == 1) ]
-        cont_reduce = pre_solved_cells not post_solved_cells
+        values = naked_twins(values)
+        post_solved_cells = len([ box for box in values.keys() if len(values[box]) == 1 ])
+        cont_reduce = pre_solved_cells != post_solved_cells
         if len([ box for box in values.keys() if len(values[box]) == 0 ]):
             return False
     return values
@@ -112,7 +132,7 @@ def search(values):
         return False
     if all(len(values[box]) == 1 for box in values):
         return values
-    min_box = min(len(values[box]), box) for box in boxes if (len(values[box]) > 1)
+    num, min_box = min((len(values[box]), box) for box in boxes if len(values[box]) > 1)
     for char in values[min_box]:
         new_puzzle = values.copy()
         new_puzzle[min_box] = char
@@ -129,9 +149,11 @@ def solve(grid):
     Returns:
         The dictionary representation of the final sudoku grid. False if no solution exists.
     """
-
+    puzzle_initial = grid_values(grid)
+    return search(puzzle_initial)
 
 if __name__ == '__main__':
+    # diag_sudoku_grid = '..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..'
     diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
     display(solve(diag_sudoku_grid))
 
