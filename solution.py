@@ -89,6 +89,7 @@ def eliminate(values):
     for box in found_values:
         for peer in peers[box]:
             values[peer] = values[peer].replace(values[box], '')
+            assign_value(values, peer, values[peer])
     return values
 
 def only_choice(values):
@@ -103,6 +104,7 @@ def only_choice(values):
             num_cells = [ cell for cell in unit if num in values[cell] ]
         if len(num_cells) == 1:
             values[num_cells[0]] = num
+            assign_value(values, num_cells[0], num)
     return values
 
 def reduce_puzzle(values):
@@ -149,11 +151,9 @@ def solve(grid):
     Returns:
         The dictionary representation of the final sudoku grid. False if no solution exists.
     """
-    puzzle_initial = grid_values(grid)
-    return search(puzzle_initial)
+    return search(grid_values(grid))
 
 if __name__ == '__main__':
-    # diag_sudoku_grid = '..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..'
     diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
     display(solve(diag_sudoku_grid))
 
